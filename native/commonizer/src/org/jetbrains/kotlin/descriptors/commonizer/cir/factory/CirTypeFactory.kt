@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.descriptors.commonizer.cir.factory
 
+import kotlinx.metadata.KmType
+import kotlinx.metadata.KmVariance
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.commonizer.cir.*
@@ -18,6 +20,15 @@ object CirTypeFactory {
     object StandardTypes {
         val ANY: CirClassType = createClassType(
             classId = ANY_CLASS_ID,
+            outerType = null,
+            visibility = DescriptorVisibilities.PUBLIC,
+            arguments = emptyList(),
+            isMarkedNullable = false
+        )
+
+        // just a temporary solution until full type resolution is implemented
+        internal val NON_EXISTING_TYPE = createClassType(
+            classId = CirEntityId.create("non/existing/type/ABCDEF01234"),
             outerType = null,
             visibility = DescriptorVisibilities.PUBLIC,
             arguments = emptyList(),
@@ -147,6 +158,13 @@ object CirTypeFactory {
                     isMarkedNullable = true
                 )
             }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun decodeVariance(variance: KmVariance): Variance = when (variance) {
+        KmVariance.INVARIANT -> Variance.INVARIANT
+        KmVariance.IN -> Variance.IN_VARIANCE
+        KmVariance.OUT -> Variance.OUT_VARIANCE
+    }
 
     fun unabbreviate(type: CirClassOrTypeAliasType): CirClassType = when (type) {
         is CirClassType -> {
