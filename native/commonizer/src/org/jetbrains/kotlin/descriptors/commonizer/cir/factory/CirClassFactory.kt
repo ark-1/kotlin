@@ -37,10 +37,10 @@ object CirClassFactory {
         setSupertypes(source.filteredSupertypes.compactMap { CirTypeFactory.create(it) })
     }
 
-    fun create(name: CirName, source: KmClass): CirClass = create(
-        annotations = CirAnnotationFactory.createAnnotations(source.flags, source::annotations),
+    fun create(name: CirName, source: KmClass, typeResolver: CirTypeResolver): CirClass = create(
+        annotations = CirAnnotationFactory.createAnnotations(source.flags, typeResolver, source::annotations),
         name = name,
-        typeParameters = source.typeParameters.compactMap(CirTypeParameterFactory::create),
+        typeParameters = source.typeParameters.compactMap { CirTypeParameterFactory.create(it, typeResolver) },
         visibility = decodeVisibility(source.flags),
         modality = decodeModality(source.flags),
         kind = decodeClassKind(source.flags),
@@ -51,16 +51,17 @@ object CirClassFactory {
         isInner = Flag.Class.IS_INNER(source.flags),
         isExternal = Flag.Class.IS_EXTERNAL(source.flags)
     ).apply {
-        setSupertypes(source.filteredSupertypes.compactMap(CirTypeFactory::create))
+        setSupertypes(source.filteredSupertypes.compactMap { CirTypeFactory.create(it, typeResolver) })
     }
 
     fun createDefaultEnumEntry(
         name: CirName,
         annotations: List<KmAnnotation>,
         enumClassId: CirEntityId,
-        enumClass: KmClass
+        enumClass: KmClass,
+        typeResolver: CirTypeResolver
     ): CirClass = create(
-        annotations = annotations.compactMap(CirAnnotationFactory::create),
+        annotations = annotations.compactMap { CirAnnotationFactory.create(it, typeResolver) },
         name = name,
         typeParameters = emptyList(),
         visibility = DescriptorVisibilities.PUBLIC,

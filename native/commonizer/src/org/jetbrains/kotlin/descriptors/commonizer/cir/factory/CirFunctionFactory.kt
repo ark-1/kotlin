@@ -32,20 +32,22 @@ object CirFunctionFactory {
         modifiers = CirFunctionModifiersFactory.create(source),
     )
 
-    fun create(name: CirName, source: KmFunction, containingClass: CirContainingClass?): CirFunction = create(
-        annotations = CirAnnotationFactory.createAnnotations(source.flags, source::annotations),
-        name = name,
-        typeParameters = source.typeParameters.compactMap(CirTypeParameterFactory::create),
-        visibility = decodeVisibility(source.flags),
-        modality = decodeModality(source.flags),
-        containingClass = containingClass,
-        valueParameters = source.valueParameters.compactMap(CirValueParameterFactory::create),
-        hasStableParameterNames = !Flag.Function.HAS_NON_STABLE_PARAMETER_NAMES(source.flags),
-        extensionReceiver = source.receiverParameterType?.let(CirExtensionReceiverFactory::create),
-        returnType = CirTypeFactory.create(source.returnType),
-        kind = decodeCallableKind(source.flags),
-        modifiers = CirFunctionModifiersFactory.create(source),
-    )
+    fun create(name: CirName, source: KmFunction, containingClass: CirContainingClass?, typeResolver: CirTypeResolver): CirFunction {
+        return create(
+            annotations = CirAnnotationFactory.createAnnotations(source.flags, typeResolver, source::annotations),
+            name = name,
+            typeParameters = source.typeParameters.compactMap { CirTypeParameterFactory.create(it, typeResolver) },
+            visibility = decodeVisibility(source.flags),
+            modality = decodeModality(source.flags),
+            containingClass = containingClass,
+            valueParameters = source.valueParameters.compactMap { CirValueParameterFactory.create(it, typeResolver) },
+            hasStableParameterNames = !Flag.Function.HAS_NON_STABLE_PARAMETER_NAMES(source.flags),
+            extensionReceiver = source.receiverParameterType?.let { CirExtensionReceiverFactory.create(it, typeResolver) },
+            returnType = CirTypeFactory.create(source.returnType, typeResolver),
+            kind = decodeCallableKind(source.flags),
+            modifiers = CirFunctionModifiersFactory.create(source),
+        )
+    }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun create(

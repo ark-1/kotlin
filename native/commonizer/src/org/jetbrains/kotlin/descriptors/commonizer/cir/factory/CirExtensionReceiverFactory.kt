@@ -19,9 +19,9 @@ object CirExtensionReceiverFactory {
         type = CirTypeFactory.create(source.type)
     )
 
-    fun create(receiverParameterType: KmType): CirExtensionReceiver = create(
+    fun create(receiverParameterType: KmType, typeResolver: CirTypeResolver): CirExtensionReceiver = create(
         annotations = emptyList(), // TODO nowhere to read receiver annotations from, see KT-42490
-        type = CirTypeFactory.create(receiverParameterType)
+        type = CirTypeFactory.create(receiverParameterType, typeResolver)
     )
 
     @Suppress("NOTHING_TO_INLINE")

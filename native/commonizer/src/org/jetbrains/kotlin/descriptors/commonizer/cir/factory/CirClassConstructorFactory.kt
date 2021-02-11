@@ -37,15 +37,17 @@ object CirClassConstructorFactory {
         )
     }
 
-    fun create(source: KmConstructor, containingClass: CirContainingClass): CirClassConstructor = create(
-        annotations = CirAnnotationFactory.createAnnotations(source.flags, source::annotations),
-        typeParameters = emptyList(), // TODO: nowhere to read constructor type parameters from
-        visibility = decodeVisibility(source.flags),
-        containingClass = containingClass,
-        valueParameters = source.valueParameters.compactMap(CirValueParameterFactory::create),
-        hasStableParameterNames = !Flag.Constructor.HAS_NON_STABLE_PARAMETER_NAMES(source.flags),
-        isPrimary = !Flag.Constructor.IS_SECONDARY(source.flags)
-    )
+    fun create(source: KmConstructor, containingClass: CirContainingClass, typeResolver: CirTypeResolver): CirClassConstructor {
+        return create(
+            annotations = CirAnnotationFactory.createAnnotations(source.flags, typeResolver, source::annotations),
+            typeParameters = emptyList(), // TODO: nowhere to read constructor type parameters from
+            visibility = decodeVisibility(source.flags),
+            containingClass = containingClass,
+            valueParameters = source.valueParameters.compactMap { CirValueParameterFactory.create(it, typeResolver) },
+            hasStableParameterNames = !Flag.Constructor.HAS_NON_STABLE_PARAMETER_NAMES(source.flags),
+            isPrimary = !Flag.Constructor.IS_SECONDARY(source.flags)
+        )
+    }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun create(

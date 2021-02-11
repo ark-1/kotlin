@@ -28,14 +28,19 @@ object CirTypeAliasFactory {
         )
     }
 
-    fun create(name: CirName, source: KmTypeAlias): CirTypeAlias = create(
-        annotations = CirAnnotationFactory.createAnnotations(source.flags, source::annotations),
-        name = name,
-        typeParameters = source.typeParameters.compactMap(CirTypeParameterFactory::create),
-        visibility = decodeVisibility(source.flags),
-        underlyingType = CirTypeFactory.create(source.underlyingType, useAbbreviation = true) as CirClassOrTypeAliasType,
-        expandedType = CirTypeFactory.create(source.expandedType, useAbbreviation = false) as CirClassType
-    )
+    fun create(name: CirName, source: KmTypeAlias, typeResolver: CirTypeResolver): CirTypeAlias {
+        val underlyingType = CirTypeFactory.create(source.underlyingType, typeResolver) as CirClassOrTypeAliasType
+        val expandedType = CirTypeFactory.unabbreviate(underlyingType)
+
+        return create(
+            annotations = CirAnnotationFactory.createAnnotations(source.flags, typeResolver, source::annotations),
+            name = name,
+            typeParameters = source.typeParameters.compactMap { CirTypeParameterFactory.create(it, typeResolver) },
+            visibility = decodeVisibility(source.flags),
+            underlyingType = underlyingType,
+            expandedType = expandedType
+        )
+    }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun create(

@@ -30,11 +30,11 @@ object CirValueParameterFactory {
         isNoinline = source.isNoinline
     )
 
-    fun create(source: KmValueParameter): CirValueParameter = create(
-        annotations = CirAnnotationFactory.createAnnotations(source.flags, source::annotations),
+    fun create(source: KmValueParameter, typeResolver: CirTypeResolver): CirValueParameter = create(
+        annotations = CirAnnotationFactory.createAnnotations(source.flags, typeResolver, source::annotations),
         name = CirName.create(source.name),
-        returnType = CirTypeFactory.create(source.type!!),
-        varargElementType = source.varargElementType?.let(CirTypeFactory::create),
+        returnType = CirTypeFactory.create(source.type!!, typeResolver),
+        varargElementType = source.varargElementType?.let { CirTypeFactory.create(it, typeResolver) },
         declaresDefaultValue = Flag.ValueParameter.DECLARES_DEFAULT_VALUE(source.flags),
         isCrossinline = Flag.ValueParameter.IS_CROSSINLINE(source.flags),
         isNoinline = Flag.ValueParameter.IS_NOINLINE(source.flags)

@@ -38,14 +38,14 @@ object CirPropertyGetterFactory {
             )
     }
 
-    fun create(source: KmProperty): CirPropertyGetter? {
+    fun create(source: KmProperty, typeResolver: CirTypeResolver): CirPropertyGetter? {
         if (!Flag.Property.HAS_GETTER(source.flags))
             return null
 
         val getterFlags = source.getterFlags
 
         val isDefault = !Flag.PropertyAccessor.IS_NOT_DEFAULT(getterFlags)
-        val annotations = CirAnnotationFactory.createAnnotations(getterFlags, source::getterAnnotations)
+        val annotations = CirAnnotationFactory.createAnnotations(getterFlags, typeResolver, source::getterAnnotations)
 
         if (isDefault && annotations.isEmpty())
             return DEFAULT_NO_ANNOTATIONS

@@ -52,31 +52,31 @@ object CirPropertyFactory {
         )
     }
 
-    fun create(name: CirName, source: KmProperty, containingClass: CirContainingClass?): CirProperty {
+    fun create(name: CirName, source: KmProperty, containingClass: CirContainingClass?, typeResolver: CirTypeResolver): CirProperty {
         val compileTimeInitializer = if (Flag.Property.HAS_CONSTANT(source.flags)) {
             CirConstantValueFactory.createSafely(
                 constantValue = source.compileTimeValue,
                 owner = source,
             )
-        } else null
+        } else CirConstantValue.NullValue
 
         return create(
-            annotations = CirAnnotationFactory.createAnnotations(source.flags, source::annotations),
+            annotations = CirAnnotationFactory.createAnnotations(source.flags, typeResolver, source::annotations),
             name = name,
-            typeParameters = source.typeParameters.compactMap(CirTypeParameterFactory::create),
+            typeParameters = source.typeParameters.compactMap { CirTypeParameterFactory.create(it, typeResolver) },
             visibility = decodeVisibility(source.flags),
             modality = decodeModality(source.flags),
             containingClass = containingClass,
             isExternal = Flag.Property.IS_EXTERNAL(source.flags),
-            extensionReceiver = source.receiverParameterType?.let(CirExtensionReceiverFactory::create),
-            returnType = CirTypeFactory.create(source.returnType),
+            extensionReceiver = source.receiverParameterType?.let { CirExtensionReceiverFactory.create(it, typeResolver) },
+            returnType = CirTypeFactory.create(source.returnType, typeResolver),
             kind = decodeCallableKind(source.flags),
             isVar = Flag.Property.IS_VAR(source.flags),
             isLateInit = Flag.Property.IS_LATEINIT(source.flags),
             isConst = Flag.Property.IS_CONST(source.flags),
             isDelegate = Flag.Property.IS_DELEGATED(source.flags),
-            getter = CirPropertyGetterFactory.create(source),
-            setter = CirPropertySetterFactory.create(source),
+            getter = CirPropertyGetterFactory.create(source, typeResolver),
+            setter = CirPropertySetterFactory.create(source, typeResolver),
             backingFieldAnnotations = emptyList(), // TODO unclear where to read backing/delegate field annotations from, see KT-44625
             delegateFieldAnnotations = emptyList(), // TODO unclear where to read backing/delegate field annotations from, see KT-44625
             compileTimeInitializer = compileTimeInitializer

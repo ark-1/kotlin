@@ -10,10 +10,10 @@ import kotlinx.metadata.Flag
 import kotlinx.metadata.Flags
 import kotlinx.metadata.KmAnnotation
 import kotlinx.metadata.KmAnnotationArgument
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.commonizer.cir.*
 import org.jetbrains.kotlin.descriptors.commonizer.cir.impl.CirAnnotationImpl
+import org.jetbrains.kotlin.descriptors.commonizer.mergedtree.CirProvided
 import org.jetbrains.kotlin.descriptors.commonizer.utils.*
 import org.jetbrains.kotlin.descriptors.commonizer.utils.compact
 import org.jetbrains.kotlin.name.Name
@@ -52,18 +52,30 @@ object CirAnnotationFactory {
         )
     }
 
-    fun createAnnotations(flags: Flags, annotations: () -> List<KmAnnotation>): List<CirAnnotation> =
-        if (!Flag.Common.HAS_ANNOTATIONS(flags))
+    fun createAnnotations(flags: Flags, typeResolver: CirTypeResolver, annotations: () -> List<KmAnnotation>): List<CirAnnotation> {
+        return if (!Flag.Common.HAS_ANNOTATIONS(flags))
             emptyList()
-        else annotations().compactMap { create(it) }
+        else
+            annotations().compactMap { create(it, typeResolver) }
+    }
 
-    fun create(source: KmAnnotation): CirAnnotation {
-        // TODO: what if (theoretically) a type alias?
+    fun create(source: KmAnnotation, typeResolver: CirTypeResolver): CirAnnotation {
+        val classId = CirEntityId.create(source.className)
+        val clazz: CirProvided.Class = typeResolver.resolveClassifier(classId)
+
         val type = CirTypeFactory.createClassType(
-            classId = CirEntityId.create(source.className),
-            outerType = null,
-            visibility = DescriptorVisibilities.PUBLIC, // TODO: put the proper visibility here
-            arguments = emptyList(),
+            classId = classId,
+            outerType = null, // annotation class can't be inner class
+            visibility = clazz.visibility,
+            arguments = clazz.typeParameters.compactMap { typeParameter ->
+                CirTypeProjectionImpl(
+                    projectionKind = typeParameter.variance,
+                    type = CirTypeFactory.createTypeParameterType(
+                        index = typeParameter.index,
+                        isMarkedNullable = false
+                    )
+                )
+            },
             isMarkedNullable = false
         )
 
@@ -77,7 +89,7 @@ object CirAnnotationFactory {
         allValueArguments.forEach { (name, constantValue) ->
             val cirName = CirName.create(name)
             if (constantValue is KmAnnotationArgument.AnnotationValue)
-                annotationValueArguments[cirName] = create(source = constantValue.value)
+                annotationValueArguments[cirName] = create(source = constantValue.value, typeResolver)
             else
                 constantValueArguments[cirName] = CirConstantValueFactory.createSafely(
                     constantValue = constantValue,
