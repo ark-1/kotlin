@@ -22,6 +22,9 @@ class FirJavaTypeRef(
     annotationBuilder: () -> List<FirAnnotationCall>,
     override val qualifier: MutableList<FirQualifierPart>
 ) : FirUserTypeRef(), FirAnnotationContainer {
+    override val customRenderer: Boolean
+        get() = true
+
     override val isMarkedNullable: Boolean
         get() = false
 
@@ -48,7 +51,10 @@ class FirJavaTypeRef(
         return this
     }
 
-    override fun replaceSource(newSource: FirSourceElement?) {
+    override fun replaceSource(newSource: FirSourceElement?) {}
+
+    override fun toString(): String {
+        return type.toString()
     }
 }
 
