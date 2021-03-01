@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
+
 package org.jetbrains.kotlin.serialization.deserialization
 
 import org.jetbrains.kotlin.builtins.*
@@ -92,12 +94,22 @@ class TypeDeserializer(
         val declarationDescriptor = constructor.declarationDescriptor
 
         val simpleType = when {
-            expandTypeAliases && declarationDescriptor is TypeAliasDescriptor -> {
-                val expandedType = with(KotlinTypeFactory) { declarationDescriptor.computeExpandedType(arguments) }
-                expandedType
-                    .makeNullableAsSpecified(expandedType.isNullable() || proto.nullable)
-                    .replaceAnnotations(Annotations.create(annotations + expandedType.annotations))
-            }
+//            expandTypeAliases && declarationDescriptor is TypeAliasDescriptor -> {
+//                val expandedType = with(KotlinTypeFactory) { declarationDescriptor.computeExpandedType(arguments) }
+//
+//                val expandedType2 = if (expandedType is AbbreviatedType) {
+//                    AbbreviatedType(expandedType.expandedType.makeNullableAsSpecified(expandedType.isNullable() || proto.nullable), expandedType.abbreviation)
+//                } else {
+//                    expandedType.makeNullableAsSpecified(expandedType.isNullable() || proto.nullable)
+//                }
+//                @Suppress("UNUSED_VARIABLE") val alt = expandedType2
+//                    .replaceAnnotations(Annotations.create(annotations + expandedType.annotations))
+//                alt
+//
+////                expandedType
+////                    .makeNullableAsSpecified(expandedType.isNullable() || proto.nullable)
+////                    .replaceAnnotations(Annotations.create(annotations + expandedType.annotations))
+//            }
             Flags.SUSPEND_TYPE.get(proto.flags) ->
                 createSuspendFunctionType(annotations, constructor, arguments, proto.nullable)
             else ->
